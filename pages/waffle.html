@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Waffle chart · Uso diario de internet por edad en España 2024</title>
+<meta name="description" content="Waffle charts del porcentaje de personas que usan internet a diario en España en 2024, por grupo de edad (Eurostat).">
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  .wf-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 14px; }
+  @media (max-width: 760px) { .wf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .wf { text-align: center; }
+  .wf .pct { font-size: 28px; font-weight: 500; letter-spacing: -.01em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .wf .grp { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+  .wf.total { border-right: 1px solid var(--line); }
+  .wf svg { max-width: 150px; margin: 0 auto 8px; }
+  .wf-key { display: flex; gap: 18px; font-size: 13px; color: var(--muted); margin-top: 14px; flex-wrap: wrap; justify-content: center; }
+  :root { --c-uso: #1f5f8b; --c-no: #d8d8d4; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="site"><a href="../index.html">← PEC 2 · Visualización de datos</a><span>Técnica 2 de 3 · Waffle chart</span></header>
+
+  <p class="kicker">Grupo II · Waffle chart</p>
+  <h1>Entre los 16 y los 24 años casi todos usan internet a diario; a partir de los 75, solo 35 de cada 100</h1>
+
+  <figure>
+    <div class="wf-grid" id="grid" role="group" aria-label="Siete cuadrículas de 10 por 10, una por grupo de edad, más el total"></div>
+    <div class="wf-key"><span><span class="sw" style="background:var(--c-uso)"></span>Usa internet a diario</span><span><span class="sw" style="background:var(--c-no)"></span>No lo usa a diario</span></div>
+    <figcaption>Porcentaje de personas que accedieron a internet a diario, por grupo de edad, España, 2024. Cada cuadrado es el 1 %; los decimales se dibujan como cuadrados parcialmente rellenos. Fuente: Eurostat, tabla isoc_ci_ifp_fu.</figcaption>
+  </figure>
+
+
+
+  <h2>Datos</h2>
+  <p class="src"><a href="https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_ci_ifp_fu?format=JSON&amp;lang=EN&amp;geo=ES&amp;indic_is=I_IDAY&amp;unit=PC_IND&amp;time=2024&amp;ind_type=IND_TOTAL&amp;ind_type=Y16_24&amp;ind_type=Y25_34&amp;ind_type=Y35_44&amp;ind_type=Y45_54&amp;ind_type=Y55_64&amp;ind_type=Y65_74&amp;ind_type=Y75_MAX">Eurostat · isoc_ci_ifp_fu · España 2024, uso diario de internet por grupo de edad (%)</a></p>
+
+
+  <footer>PEC 2 · Visualización de datos · UOC · Nicolás Iván Sanjuán Tejedor</footer>
+</div>
+
+<script type="text/plain" id="csv-data">
+grupo,porcentaje_uso_diario
+Total,91.54
+16–24,99.75
+25–34,98.91
+35–44,97.13
+45–54,94.15
+55–64,86.89
+65–74,70.6
+75 o más,34.74
+</script>
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  var grid = document.getElementById("grid");
+  var N = 10, size = 11, gap = 1.6, pad = 1;
+  var side = N * size + (N - 1) * gap + 2 * pad;
+
+  function el(name, attrs, parent) {
+    var e = document.createElementNS(NS, name);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function fmt(n) { return n.toFixed(1).replace(".", ",") + " %"; }
+
+  Promise.resolve(document.getElementById("csv-data").textContent).then(function (txt) {
+    var rows = txt.trim().split("\n").slice(1).map(function (l) {
+      var p = l.split(","); return { name: p[0], value: parseFloat(p[1]) };
+    });
+    rows.forEach(function (d, idx) {
+      var wrap = document.createElement("div");
+      wrap.className = "wf" + (idx === 0 ? " total" : "");
+      var svg = el("svg", { viewBox: "0 0 " + side + " " + side, role: "img", "aria-label": d.name + ": " + fmt(d.value) + " usa internet a diario" });
+      var ttl = el("title", {}, svg); ttl.textContent = d.name + ": " + fmt(d.value) + " usa internet a diario";
+      for (var i = 0; i < N * N; i++) {
+        var col = i % N, row = Math.floor(i / N);
+        var x = pad + col * (size + gap), y = pad + (N - 1 - row) * (size + gap);   // se rellena de abajo arriba
+        el("rect", { x: x, y: y, width: size, height: size, rx: 0, fill: "var(--c-no)" }, svg);
+        var fill = Math.max(0, Math.min(1, d.value - i));
+        if (fill > 0) el("rect", { x: x, y: y, width: size * fill, height: size, rx: 0, fill: "var(--c-uso)" }, svg);
+      }
+      wrap.appendChild(svg);
+      var pct = document.createElement("div"); pct.className = "pct"; pct.textContent = fmt(d.value);
+      var grp = document.createElement("div"); grp.className = "grp"; grp.textContent = d.name === "Total" ? "Total" : d.name + " años";
+      if (d.name === "75 o más") grp.textContent = "75 años o más";
+      wrap.appendChild(pct); wrap.appendChild(grp);
+      grid.appendChild(wrap);
+
+    });
+  });
+})();
+</script>
+</body>
+</html>

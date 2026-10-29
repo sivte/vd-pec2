@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pie chart · Generación eléctrica de España 2024</title>
+<meta name="description" content="Gráfico de sectores de la generación eléctrica de España en 2024 por fuente (Eurostat).">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="site"><a href="../index.html">← PEC 2 · Visualización de datos</a><span>Técnica 1 de 3 · Pie chart</span></header>
+
+  <p class="kicker">Grupo I · Pie chart (gráfico de sectores)</p>
+  <h1>La eólica lidera la electricidad de España en 2024, pero ninguna fuente supera una cuarta parte</h1>
+
+  <div class="layout">
+    <figure>
+      <svg id="pie" viewBox="0 0 560 440" role="img" aria-labelledby="pie-t pie-d">
+        <title id="pie-t">Generación eléctrica de España en 2024 por fuente</title>
+        <desc id="pie-d">Gráfico de sectores: eólica 21,6 %, nuclear 18,9 %, solar fotovoltaica 18,7 %, gas natural 18,2 %, hidráulica 12,0 % y resto 10,7 %.</desc>
+      </svg>
+      <figcaption>Producción bruta de electricidad en España, 2024, en % del total (287.915 GWh). Fuente: Eurostat, tabla nrg_bal_peh.</figcaption>
+    </figure>
+
+    <div>
+      <table class="legend" id="legend" aria-label="Tabla con los valores del gráfico"></table>
+    </div>
+  </div>
+
+
+
+  <h2>Datos</h2>
+  <p class="src"><a href="https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/nrg_bal_peh?format=JSON&amp;lang=EN&amp;geo=ES&amp;freq=A&amp;unit=GWH&amp;nrg_bal=GEP&amp;time=2024&amp;siec=TOTAL&amp;siec=RA300&amp;siec=N900H&amp;siec=RA420&amp;siec=G3000&amp;siec=RA100&amp;siec=C0000X0350-0370&amp;siec=C0350-0370&amp;siec=O4000XBIO&amp;siec=RA130&amp;siec=RA410&amp;siec=R5110-5150_W6000RI&amp;siec=R5300&amp;siec=W6210&amp;siec=RA500&amp;siec=R5290&amp;siec=W6100_6220&amp;siec=H8000&amp;siec=X9900&amp;siec=BA100">Eurostat · nrg_bal_peh · España, producción bruta de electricidad por combustible (GWh)</a></p>
+
+  <footer>PEC 2 · Visualización de datos · UOC · Nicolás Iván Sanjuán Tejedor</footer>
+</div>
+
+<script type="text/plain" id="csv-data">
+tecnologia,porcentaje,gwh,nota
+Eólica,21.5653,62090,Eurostat nrg_bal_peh (siec)
+Nuclear,18.9405,54532,Eurostat nrg_bal_peh (siec)
+Solar fotovoltaica,18.6696,53752,Eurostat nrg_bal_peh (siec)
+Gas natural,18.1752,52329,Eurostat nrg_bal_peh (siec)
+Hidráulica,11.9531,34415,Eurostat nrg_bal_peh (siec)
+Resto,10.6963,30796,Total menos las cinco fuentes anteriores (carbón; petróleo; bombeo; biomasa; solar térmica; residuos; otros)
+Total,100,287915,Eurostat nrg_bal_peh (siec=TOTAL)
+</script>
+<script>
+(function () {
+  var COLORS = {
+    "Eólica": "var(--c-eolica)", "Nuclear": "var(--c-nuclear)", "Solar fotovoltaica": "var(--c-solar)",
+    "Gas natural": "var(--c-ciclo)", "Hidráulica": "var(--c-hidro)", "Resto": "var(--c-resto)"
+  };
+  var NS = "http://www.w3.org/2000/svg";
+  var svg = document.getElementById("pie");
+  var legend = document.getElementById("legend");
+  var cx = 280, cy = 220, R = 140;
+
+  function el(name, attrs, parent) {
+    var e = document.createElementNS(NS, name);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function pt(angle, r) { return [cx + r * Math.sin(angle), cy - r * Math.cos(angle)]; }
+  function fmt(n) { return n.toFixed(1).replace(".", ",") + " %"; }
+
+  Promise.resolve(document.getElementById("csv-data").textContent).then(function (txt) {
+    var rows = txt.trim().split("\n").slice(1).map(function (l) {
+      var p = l.split(","); return { name: p[0], value: parseFloat(p[1]) };
+    }).filter(function (d) { return d.name !== "Total"; });
+    var total = rows.reduce(function (s, d) { return s + d.value; }, 0);
+    var a0 = 0, groups = [];
+    rows.forEach(function (d, i) {
+      var a1 = a0 + (d.value / total) * 2 * Math.PI;
+      var p0 = pt(a0, R), p1 = pt(a1, R);
+      var large = a1 - a0 > Math.PI ? 1 : 0;
+      var g = el("g", { tabindex: 0 }, svg);
+      el("path", {
+        d: "M" + cx + "," + cy + " L" + p0[0] + "," + p0[1] + " A" + R + "," + R + " 0 " + large + " 1 " + p1[0] + "," + p1[1] + " Z",
+        fill: COLORS[d.name], stroke: "var(--surface)", "stroke-width": 2
+      }, g);
+      var mid = (a0 + a1) / 2, lp0 = pt(mid, R + 4), lp1 = pt(mid, R + 22), right = Math.sin(mid) >= 0;
+      el("polyline", { points: lp0.join(",") + " " + lp1.join(",") + " " + (lp1[0] + (right ? 10 : -10)) + "," + lp1[1], fill: "none", stroke: "var(--muted)", "stroke-width": 1 }, g);
+      var tx = lp1[0] + (right ? 14 : -14);
+      var t = el("text", { x: tx, y: lp1[1] - 2, "text-anchor": right ? "start" : "end", "font-size": 14, "font-weight": 600 }, g);
+      t.textContent = fmt(d.value);
+      var t2 = el("text", { x: tx, y: lp1[1] + 14, "text-anchor": right ? "start" : "end", "font-size": 13 }, g);
+      t2.setAttribute("style", "fill: var(--muted)");
+      t2.textContent = d.name;
+      groups.push(g);
+
+      var tr = document.createElement("tr");
+      tr.innerHTML = '<td><span class="sw" style="background:' + COLORS[d.name] + '"></span>' + d.name + '</td><td class="num">' + fmt(d.value) + '</td>';
+      legend.appendChild(tr);
+      function on() { groups.forEach(function (x, j) { x.style.opacity = j === i ? 1 : 0.35; }); tr.classList.add("is-active"); }
+      function off() { groups.forEach(function (x) { x.style.opacity = 1; }); tr.classList.remove("is-active"); }
+      g.addEventListener("mouseenter", on); g.addEventListener("mouseleave", off);
+      g.addEventListener("focus", on); g.addEventListener("blur", off);
+      tr.addEventListener("mouseenter", on); tr.addEventListener("mouseleave", off);
+      a0 = a1;
+    });
+    var tot = document.createElement("tr");
+    tot.innerHTML = '<td><b>Total</b></td><td class="num">' + fmt(total) + '</td>';
+    legend.appendChild(tot);
+  });
+})();
+</script>
+</body>
+</html>

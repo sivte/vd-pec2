@@ -1,0 +1,8 @@
+tecnologia,porcentaje,gwh,nota
+Eólica,21.5653,62090,Eurostat nrg_bal_peh (siec)
+Nuclear,18.9405,54532,Eurostat nrg_bal_peh (siec)
+Solar fotovoltaica,18.6696,53752,Eurostat nrg_bal_peh (siec)
+Gas natural,18.1752,52329,Eurostat nrg_bal_peh (siec)
+Hidráulica,11.9531,34415,Eurostat nrg_bal_peh (siec)
+Resto,10.6963,30796,Total menos las cinco fuentes anteriores (carbón; petróleo; bombeo; biomasa; solar térmica; residuos; otros)
+Total,100,287915,Eurostat nrg_bal_peh (siec=TOTAL)
